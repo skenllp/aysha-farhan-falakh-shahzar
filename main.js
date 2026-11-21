@@ -3,11 +3,27 @@
   var $ = function (id) { return document.getElementById(id); };
   var cover = $('cover'), overlay = $('video-overlay'), video = $('reveal-video'),
       skipBtn = $('skip-btn'), mask = $('video-fade-mask'), openBtn = $('open-btn'),
-      musicBtn = $('music-btn');
+      musicBtn = $('music-btn'), names = $('video-names');
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var started = false, finished = false, watchdog, audio = null, wantMusic = false;
+  var VW = 720, VH = 1280, CARD = { x: 74, y: 296, w: 572 };   // blank card in the video's final frame
 
-  /* music (optional, starts from the Open tap, toggle bottom-right) */
+  /* keep the names glued to the card, using the same maths as object-fit: cover */
+  function layoutNames() {
+    var W = overlay.clientWidth, H = overlay.clientHeight, stage = video.parentNode.getBoundingClientRect();
+    var sw = stage.width || W;
+    var s = Math.max(sw / VW, H / VH);
+    var ox = stage.left + (sw - VW * s) * .5, oy = (H - VH * s) * .45;
+    names.style.left = (ox + CARD.x * s) + 'px';
+    names.style.top = (oy + CARD.y * s) + 'px';
+    names.style.width = (CARD.w * s) + 'px';
+    names.style.setProperty('--s', s + 'px');
+  }
+  layoutNames();
+  window.addEventListener('resize', layoutNames);
+  window.addEventListener('orientationchange', layoutNames);
+
+  /* music (starts from the Open tap, toggle bottom-right) */
   function setMusic(on) {
     wantMusic = on;
     musicBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -29,43 +45,47 @@
     finished = true;
     clearTimeout(watchdog);
     skipBtn.classList.remove('visible');
-    mask.classList.add('on');                       // video dims to black (800ms)
+    mask.classList.add('on');
     setTimeout(function () {
       unlock();
       window.scrollTo(0, 0);
-      overlay.classList.add('gone');                // black fades off the hero (900ms)
-      document.body.classList.add('live');          // staggered text reveal
+      overlay.classList.add('gone');
+      document.body.classList.add('live');
       musicBtn.hidden = false;
       try { video.pause(); } catch (e) {}
       setTimeout(function () { overlay.remove(); cover.remove(); }, 1000);
     }, reduce ? 50 : 800);
   }
 
-  /* Stage 1 → 2 */
+  /* Stage 1 → 2: the video already sits under the cover showing frame 0,
+     so the cover only fades once playback has truly started (no blink). */
+  var coverGone = false;
+  function dropCover() { if (coverGone) return; coverGone = true; cover.classList.add('out'); }
   function openInvitation() {
     if (started) return;
     started = true;
     openBtn.disabled = true;
     setMusic(true);
-    cover.classList.add('out');
-    if (reduce) { setTimeout(toHero, 400); return; }  // no video for reduced-motion users
+    if (reduce) { dropCover(); setTimeout(toHero, 500); return; }
+    layoutNames();
     overlay.classList.add('active');
     overlay.setAttribute('aria-hidden', 'false');
     skipBtn.focus({ preventScroll: true });
-    setTimeout(function () { skipBtn.classList.add('visible'); }, 900);
+    setTimeout(function () { skipBtn.classList.add('visible'); }, 1200);
+    video.addEventListener('playing', function () { setTimeout(dropCover, 80); }, { once: true });
+    setTimeout(dropCover, 900);
     var p;
     try { p = video.play(); } catch (e) {}
-    if (p && p.catch) p.catch(function () { setTimeout(toHero, 600); });
-    // fallback if video never starts
-    watchdog = setTimeout(function () { if (video.currentTime < .1) toHero(); }, 5000);
+    if (p && p.catch) p.catch(function () { dropCover(); setTimeout(toHero, 600); });
+    watchdog = setTimeout(function () { if (video.currentTime < .1) { dropCover(); toHero(); } }, 5000);
   }
 
   openBtn.addEventListener('click', openInvitation);
   skipBtn.addEventListener('click', toHero);
-  video.addEventListener('ended', toHero);
-  video.addEventListener('error', function () { if (started) toHero(); });
+  video.addEventListener('ended', function () { setTimeout(toHero, 900); });   // hold on the finished card, then fade
+  video.addEventListener('error', function () { if (started) { dropCover(); toHero(); } });
   video.addEventListener('timeupdate', function () {
-    if (video.duration && video.duration - video.currentTime < .85) toHero();   // begin fade before final frame
+    if (video.duration && video.duration - video.currentTime < 1.5 && !finished) names.classList.add('show');
   });
   document.addEventListener('keydown', function (e) {
     if (started && !finished && (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); toHero(); }
@@ -78,7 +98,7 @@
       if (ticking) return; ticking = true;
       requestAnimationFrame(function () {
         var y = window.scrollY;
-        if (y < 1200) hc.style.transform = 'translateY(' + (y * .06).toFixed(1) + 'px)';
+        if (y < 1200 && hc) hc.style.transform = 'translateY(' + (y * .06).toFixed(1) + 'px)';
         ticking = false;
       });
     }, { passive: true });
