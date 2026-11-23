@@ -23,18 +23,53 @@
   window.addEventListener('resize', layoutNames);
   window.addEventListener('orientationchange', layoutNames);
 
-  /* music (starts from the Open tap, toggle bottom-right) */
+  /* music: song A plays from the cover to the Dua section, song B from Dua to the end.
+     One toggle controls both; B is unlocked on the Open tap so mobile browsers allow the later switch. */
+  var VOL = .6, tracks = { a: null, b: null }, cur = 'a', fades = {};
+  function mk(src) { var t = new Audio(src); t.loop = true; t.preload = 'auto'; t.volume = 0; return t; }
+  function fade(t, key, to, ms, done) {
+    clearInterval(fades[key]);
+    var from = t.volume, n = Math.max(1, ms / 50), i = 0;
+    fades[key] = setInterval(function () {
+      i++; t.volume = Math.max(0, Math.min(1, from + (to - from) * i / n));
+      if (i >= n) { clearInterval(fades[key]); if (done) done(); }
+    }, 50);
+  }
+  function play(t) { var p = t.play(); if (p && p.catch) p.catch(function () { wantMusic = false; musicBtn.setAttribute('aria-pressed', 'false'); }); }
   function setMusic(on) {
     wantMusic = on;
     musicBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
-    if (!audio) { audio = new Audio('assets/music.mp3'); audio.loop = true; audio.volume = .6; }
-    if (on) audio.play().catch(function () { wantMusic = false; musicBtn.setAttribute('aria-pressed', 'false'); });
-    else audio.pause();
+    if (!tracks.a) { tracks.a = mk('assets/music.mp3'); tracks.b = mk('assets/music-dua.mp3'); unlockB(); }
+    var t = tracks[cur];
+    if (on) { t.volume = 0; play(t); fade(t, cur, VOL, 800); }
+    else fade(t, cur, 0, 400, function () { t.pause(); });
+  }
+  function unlockB() {          // silent play/pause inside the tap gesture (iOS/Android autoplay rules)
+    var t = tracks.b; t.muted = true;
+    var p = t.play();
+    if (p && p.then) p.then(function () { t.pause(); t.currentTime = 0; t.muted = false; }).catch(function () { t.muted = false; });
+    else t.muted = false;
+  }
+  function switchTo(next) {
+    if (next === cur) return;
+    var from = tracks[cur], to = tracks[next];
+    cur = next;
+    if (!tracks.a || !wantMusic) return;
+    to.volume = 0; play(to); fade(to, next, VOL, 2000);
+    fade(from, next === 'b' ? 'a' : 'b', 0, 2000, function () { from.pause(); });
+  }
+  var duaEl = $('dua');
+  if (duaEl && 'IntersectionObserver' in window) {
+    new IntersectionObserver(function (en) {
+      var e = en[0];
+      switchTo(e.isIntersecting || e.boundingClientRect.top < 0 ? 'b' : 'a');
+    }, { rootMargin: '0px 0px -40% 0px' }).observe(duaEl);
   }
   musicBtn.addEventListener('click', function () { setMusic(!wantMusic); });
   document.addEventListener('visibilitychange', function () {
-    if (!audio) return;
-    if (document.hidden) audio.pause(); else if (wantMusic) audio.play().catch(function () {});
+    if (!tracks.a) return;
+    var t = tracks[cur];
+    if (document.hidden) t.pause(); else if (wantMusic) play(t);
   });
 
   function unlock() { document.documentElement.classList.remove('locked'); document.body.classList.remove('locked'); }
