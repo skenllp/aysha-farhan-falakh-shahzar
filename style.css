@@ -194,3 +194,5 @@ footer p{font:300 .74rem var(--cinzel);letter-spacing:.22em;color:var(--muted);l
 @media (orientation:landscape) and (max-height:500px){.cover-inner{padding-top:1rem;padding-bottom:1rem}.cover-bis{font-size:1.3rem}.cover-title{font-size:1.2rem;margin:0}.cover-name{font-size:1rem}.cover-date{margin:0;font-size:.85rem}.btn{padding:.7rem 1.6rem}}
 
 @media (max-height:760px) and (orientation:portrait){.cover-inner{background:linear-gradient(rgba(11,11,13,.92),rgba(11,11,13,.5) 14%,rgba(11,11,13,0) 30%,rgba(11,11,13,.72) 44%,rgba(11,11,13,.95) 58%)}}
+
+sup{font-size:.55em;line-height:0;vertical-align:.7em;letter-spacing:.02em}
