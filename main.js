@@ -24,41 +24,32 @@
   window.addEventListener('orientationchange', layoutNames);
 
   /* music: song A plays from the cover to the Dua section, song B from Dua to the end.
+     Hard switch (no crossfade) so the two songs are never audible together.
      One toggle controls both; B is unlocked on the Open tap so mobile browsers allow the later switch. */
-  var VOL = .6, tracks = { a: null, b: null }, cur = 'a', fades = {};
-  var canFade = (function () { try { var t = new Audio(); t.volume = .5; return Math.abs(t.volume - .5) < .01; } catch (e) { return false; } })();  // iOS ignores volume
-  function mk(src) { var t = new Audio(src); t.loop = true; t.preload = 'auto'; t.volume = 0; return t; }
-  function fade(t, key, to, ms, done) {
-    clearInterval(fades[key]);
-    if (!canFade) { if (done) done(); return; }          // no fading on iOS: hard switch, never two songs at once
-    var from = t.volume, n = Math.max(1, ms / 50), i = 0;
-    fades[key] = setInterval(function () {
-      i++; t.volume = Math.max(0, Math.min(1, from + (to - from) * i / n));
-      if (i >= n) { clearInterval(fades[key]); if (done) done(); }
-    }, 50);
-  }
+  var VOL = .6, tracks = { a: null, b: null }, cur = 'a';
+  function mk(src) { var t = new Audio(src); t.loop = true; t.preload = 'auto'; t.volume = VOL; return t; }
   function play(t) { var p = t.play(); if (p && p.catch) p.catch(function () { wantMusic = false; musicBtn.setAttribute('aria-pressed', 'false'); }); }
   function setMusic(on) {
     wantMusic = on;
     musicBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
     if (!tracks.a) { tracks.a = mk('assets/music.mp3'); tracks.b = mk('assets/music-dua.mp3'); unlockB(); }
-    var t = tracks[cur];
-    if (on) { t.volume = 0; play(t); fade(t, cur, VOL, 800); }
-    else fade(t, cur, 0, 400, function () { t.pause(); });
+    var other = tracks[cur === 'a' ? 'b' : 'a'];
+    other.pause();
+    if (on) play(tracks[cur]); else tracks[cur].pause();
   }
   function unlockB() {          // silent play/pause inside the tap gesture (iOS/Android autoplay rules)
     var t = tracks.b; t.muted = true;
     var p = t.play();
-    if (p && p.then) p.then(function () { if (!(cur === 'b' && wantMusic)) { t.pause(); t.currentTime = 0; } t.muted = false; }).catch(function () { t.muted = false; });
+    if (p && p.then) p.then(function () { if (cur !== 'b') { t.pause(); t.currentTime = 0; } t.muted = false; }).catch(function () { t.muted = false; });
     else t.muted = false;
   }
   function switchTo(next) {
     if (next === cur) return;
     var from = tracks[cur], to = tracks[next];
     cur = next;
-    if (!tracks.a || !wantMusic) return;
-    to.volume = 0; play(to); fade(to, next, VOL, 2000);
-    fade(from, next === 'b' ? 'a' : 'b', 0, 2000, function () { from.pause(); });
+    if (!tracks.a) return;
+    from.pause();                       // stop the old song first
+    if (wantMusic) { to.muted = false; play(to); }
   }
   var duaEl = $('dua');
   if (duaEl && 'IntersectionObserver' in window) {
