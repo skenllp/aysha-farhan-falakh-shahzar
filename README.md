@@ -1,4 +1,4 @@
-# Wedding Invitation — Aysha & Farhan • Falakh & Shahzar
+# Wedding Invitation — Aysha & Farhan • Falakh & Shazar
 Static site (no build step). Deploy the folder to Vercel/Netlify as-is.
 - `index.html`, `style.css`, `main.js`
 - `assets/hero-arch.png` (hero background), `assets/invitation-opening.mp4` (+ `video-poster.jpg`), `assets/music.mp3`
