@@ -157,6 +157,7 @@ body.live .h-name,body.live .h-title{letter-spacing:inherit}
 .rsvp li{font:500 clamp(1.15rem,5vw,1.5rem)/1.2 var(--serif);color:var(--champ);padding:1.5rem .4rem;border-bottom:1px solid rgba(196,154,85,.25)}
 .rsvp li:nth-child(odd){border-right:1px solid rgba(196,154,85,.25)}
 .rsvp li:nth-last-child(-n+2){border-bottom:0}
+.rsvp-firm{width:100%;margin-top:-1.1rem;padding:1.4rem .4rem 0;border-top:1px solid rgba(196,154,85,.25);font:600 clamp(1.2rem,5.4vw,1.6rem)/1.3 var(--serif);letter-spacing:.04em;color:#F3DDAE}
 
 /* closing */
 .hamd{font-size:clamp(2.4rem,11vw,3.4rem);color:var(--champ);line-height:1.5;margin-bottom:1rem}
