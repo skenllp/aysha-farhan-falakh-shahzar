@@ -176,7 +176,7 @@
     canvas.width = W * dpr; canvas.height = H * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     var g = ctx.createLinearGradient(0, 0, W, H);
-    g.addColorStop(0, '#D6BA85'); g.addColorStop(.35, '#BEA06D'); g.addColorStop(.6, '#E2CB9B'); g.addColorStop(1, '#A68A57');
+    g.addColorStop(0, '#D9B77E'); g.addColorStop(.35, '#C49A55'); g.addColorStop(.6, '#E8CF9C'); g.addColorStop(1, '#A07C3E');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     // brushed-metal texture
     for (var i = 0; i < 260; i++) {
@@ -222,7 +222,7 @@
   /* restrained gold sparkle */
   function sparkle() {
     var c = spark.getContext('2d'), w = spark.width = innerWidth, h = spark.height = innerHeight;
-    var r = canvas.getBoundingClientRect(), cols = ['#BEA06D', '#D6BA85', '#F0E7D8'], ps = [], f = 0;
+    var r = canvas.getBoundingClientRect(), cols = ['#C49A55', '#D9B77E', '#FFF4E8'], ps = [], f = 0;
     for (var i = 0; i < 46; i++) ps.push({
       x: r.left + Math.random() * r.width, y: r.top + r.height * (.2 + Math.random() * .6),
       vx: (Math.random() - .5) * 1.1, vy: -.4 - Math.random() * 1.1, s: 1 + Math.random() * 2, c: cols[i % 3], l: 90 + Math.random() * 60
